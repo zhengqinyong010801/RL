@@ -14,6 +14,7 @@ class SarsaAgent(BaseAgent):
         
     def update(self,s,a,r,s_next,a_next,done):
         # TO DO: Add own code
+        self.Q_sa[s, a] = self.Q_sa[s, a] + self.learning_rate * (r + self.gamma * self.Q_sa[s_next, a_next] - self.Q_sa[s, a])
         pass
 
         
@@ -28,7 +29,22 @@ def sarsa(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None, tem
     eval_returns = []
 
     # TO DO: Write your SARSA algorithm here!
-    
+    s = env.reset()
+    a = pi.select_action(s, policy, epsilon, temp) # epsilon-greedy
+    for t in range(n_timesteps):
+        # simulate a single episode from start state to terminal state
+        next_s, r , done = env.step(a)
+        # if plot and t >= 0.98 * n_timesteps:
+        #     env.render(Q_sa=pi.Q_sa, plot_optimal_policy=True, step_pause=0.05) 
+        # rewards.append(r)
+        next_a = pi.select_action(next_s, policy, epsilon, temp)
+        pi.update(s, a, r, next_s, next_a, learning_rate, gamma)
+        if done:
+            s = env.reset()
+            a = pi.select_action(s, policy, epsilon, temp) # epsilon-greedy
+        else:
+            s = next_s
+            a = next_a
     # if plot:
     #    env.render(Q_sa=pi.Q_sa,plot_optimal_policy=True,step_pause=0.1) # Plot the Q-value estimates during SARSA execution
 
