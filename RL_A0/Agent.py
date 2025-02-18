@@ -8,6 +8,7 @@ By Thomas Moerland
 
 import numpy as np
 from Helper import softmax, argmax
+import random
 
 class BaseAgent:
 
@@ -21,23 +22,63 @@ class BaseAgent:
     def select_action(self, s, policy='egreedy', epsilon=None, temp=None):
         
         if policy == 'greedy':
+             # choose the best action
+            a = argmax(self.Q_sa[s])
             # TO DO: Add own code
-            a = np.random.randint(0,self.n_actions) # Replace this with correct action selection
+            # a = np.random.randint(0,self.n_actions) # Replace this with correct action selection
             
         elif policy == 'egreedy':
             if epsilon is None:
                 raise KeyError("Provide an epsilon")
-                
+            # if 1-epsilon*((self.n_actions-1)/self.n_actions) > epsilon/self.n_actions:
+            # Initialize probabilities for each action with epsilon / |A|
+            probabilities = np.ones(self.n_actions) * epsilon / self.n_actions
+            # if random.random() <= epsilon:
+            #     # choose the best action
+            #     a = argmax(self.Q_sa[s])
+            # else:
+            #     # choose randomly
+            #     a = np.random.randint(0,self.n_actions)
+            # Find the greedy action (action with maximum Q-value)
+            if isinstance(self.Q_sa, dict):
+                q_values = [self.Q_sa.get((s, a), 0) for a in self.n_actions]
+            else:
+                q_values = self.Q_sa[s]
+            
+            greedy_action = np.argmax(q_values)
+            
+            # Add (1 - epsilon) to the probability of the greedy action
+            probabilities[greedy_action] += (1.0 - epsilon)
+            
+            # Select action based on the probability distribution
+            a = np.random.choice(self.n_actions, p=probabilities)
             # TO DO: Add own code
-            a = np.random.randint(0,self.n_actions) # Replace this with correct action selection
+            # a = np.random.randint(0,self.n_actions) # Replace this with correct action selection
                  
         elif policy == 'softmax':
             if temp is None:
                 raise KeyError("Provide a temperature")
+            # Get all possible actions and their Q-values for the current state
+            # actions = [a for s, a in Q_values.keys() if s == state]
+            q_vals = np.array([self.Q_sa[(s, a)] for a in self.n_actions])
+            
+            # Compute action probabilities using the Boltzmann distribution
+            # Subtract max Q-value for numerical stability
+            max_q = np.max(q_vals)
+            exp_q = np.exp((q_vals - max_q) / temp)
+            probs = exp_q / np.sum(exp_q)
+            
+            # Create dictionary mapping actions to their probabilities
+            # action_probs = dict(zip(actions, probs))
+            
+            # Sample action according to computed probabilities
+            a = np.random.choice(self.n_actions, p=probs)
+            
+            # return action, action_probs
                 
             # TO DO: Add own code
             a = np.random.randint(0,self.n_actions) # Replace this with correct action selection
-              
+        print(a)  
         return a
         
     def update(self):
